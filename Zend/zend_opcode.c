@@ -1058,8 +1058,14 @@ ZEND_API binary_op_type get_binary_op(int opcode)
 			return (binary_op_type) is_not_identical_function;
 		case ZEND_IS_EQUAL:
 		case ZEND_CASE:
+      if ((CG(active_op_array)->fn_flags & ZEND_ACC_STRICT_TYPES) > 0) {
+  			return (binary_op_type) is_identical_function;
+      }
 			return (binary_op_type) is_equal_function;
 		case ZEND_IS_NOT_EQUAL:
+      if ((CG(active_op_array)->fn_flags & ZEND_ACC_STRICT_TYPES) > 0) {
+  			return (binary_op_type) is_not_identical_function;
+      }
 			return (binary_op_type) is_not_equal_function;
 		case ZEND_IS_SMALLER:
 			return (binary_op_type) is_smaller_function;
