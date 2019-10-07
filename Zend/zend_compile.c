@@ -6181,6 +6181,35 @@ void zend_compile_use_trait(zend_ast *ast) /* {{{ */
 }
 /* }}} */
 
+void zend_compile_generic_names(zend_ast *ast) /* {{{ */
+{
+	zend_ast_list *list = zend_ast_get_list(ast);
+	zend_class_entry *ce = CG(active_class_entry);
+	zend_generic_name *generic_names;
+	uint32_t i;
+
+	generic_names = emalloc(sizeof(zend_generic_name) * list->children);
+
+	for (i = 0; i < list->children; ++i) {
+		zend_ast *name_ast = list->child[i];
+		zend_string *name = zend_ast_get_str(name_ast);
+
+		if (!zend_is_const_default_class_ref(name_ast)) {
+			efree(generic_names);
+			zend_error_noreturn(E_COMPILE_ERROR,
+								"Cannot use '%s' as generic name as it is reserved", ZSTR_VAL(name));
+		}
+
+		generic_names[i].name = name;
+		generic_names[i].type = NULL; /* types aren't supported yet */
+	}
+
+	ce->ce_flags |= ZEND_ACC_GENERIC;
+	ce->num_generics = list->children;
+	ce->generic_names = generic_names;
+}
+/* }}} */
+
 void zend_compile_implements(zend_ast *ast) /* {{{ */
 {
 	zend_ast_list *list = zend_ast_get_list(ast);
@@ -6230,6 +6259,7 @@ zend_op *zend_compile_class_decl(zend_ast *ast, zend_bool toplevel) /* {{{ */
 	zend_ast *extends_ast = decl->child[0];
 	zend_ast *implements_ast = decl->child[1];
 	zend_ast *stmt_ast = decl->child[2];
+	zend_ast *generic_names_ast = decl->child[3];
 	zend_string *name, *lcname;
 	zend_class_entry *ce = zend_arena_alloc(&CG(arena), sizeof(zend_class_entry));
 	zend_op *opline;
@@ -6348,6 +6378,10 @@ zend_op *zend_compile_class_decl(zend_ast *ast, zend_bool toplevel) /* {{{ */
 				"Clone method %s::%s() cannot declare a return type",
 				ZSTR_VAL(ce->name), ZSTR_VAL(ce->clone->common.function_name));
 		}
+	}
+
+	if (generic_names_ast) {
+		zend_compile_generic_names(generic_names_ast);
 	}
 
 	if (implements_ast) {

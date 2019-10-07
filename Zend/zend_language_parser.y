@@ -69,7 +69,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %left '^'
 %left '&'
 %nonassoc T_IS_EQUAL T_IS_NOT_EQUAL T_IS_IDENTICAL T_IS_NOT_IDENTICAL T_SPACESHIP
-%nonassoc '<' T_IS_SMALLER_OR_EQUAL '>' T_IS_GREATER_OR_EQUAL
+%nonassoc GENERIC '<' T_IS_SMALLER_OR_EQUAL '>' T_IS_GREATER_OR_EQUAL
 %left '.'
 %left T_SL T_SR
 %left '+' '-'
@@ -256,6 +256,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> isset_variable type return_type type_expr
 %type <ast> identifier
 %type <ast> inline_function
+%type <ast> generic_type_parameters generic_type_parameter_list
 
 %type <num> returns_ref function fn is_reference is_variadic variable_modifiers
 %type <num> method_modifiers non_empty_member_modifiers member_modifier
@@ -506,11 +507,11 @@ is_variadic:
 
 class_declaration_statement:
 		class_modifiers T_CLASS { $<num>$ = CG(zend_lineno); }
-		T_STRING extends_from implements_list backup_doc_comment '{' class_statement_list '}'
-			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, $1, $<num>3, $7, zend_ast_get_str($4), $5, $6, $9, NULL); }
+		T_STRING generic_type_parameters extends_from implements_list backup_doc_comment '{' class_statement_list '}'
+			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, $1, $<num>3, $8, zend_ast_get_str($4), $6, $7, $10, $5); }
 	|	T_CLASS { $<num>$ = CG(zend_lineno); }
-		T_STRING extends_from implements_list backup_doc_comment '{' class_statement_list '}'
-			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, 0, $<num>2, $6, zend_ast_get_str($3), $4, $5, $8, NULL); }
+		T_STRING generic_type_parameters extends_from implements_list backup_doc_comment '{' class_statement_list '}'
+			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, 0, $<num>2, $7, zend_ast_get_str($3), $5, $6, $9, $4); }
 ;
 
 class_modifiers:
@@ -534,6 +535,19 @@ interface_declaration_statement:
 		T_INTERFACE { $<num>$ = CG(zend_lineno); }
 		T_STRING interface_extends_list backup_doc_comment '{' class_statement_list '}'
 			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, ZEND_ACC_INTERFACE, $<num>2, $5, zend_ast_get_str($3), NULL, $4, $7, NULL); }
+;
+
+generic_type_parameter_list:
+		T_STRING
+			{ $$ = zend_ast_create_list(1, ZEND_AST_NAME_LIST, $1); }
+	|	generic_type_parameter_list ',' T_STRING
+			{ $$ = zend_ast_list_add($1, $3); }
+;
+
+generic_type_parameters:
+		/* empty */ { $$ = zend_ast_create_list(0, ZEND_AST_NAME_LIST); }
+	|	'<' generic_type_parameter_list '>'	{ $$ = $2; }
+	|	'<' generic_type_parameter_list ',' '>'	{ $$ = $2; }
 ;
 
 extends_from:
@@ -871,6 +885,8 @@ anonymous_class:
 new_expr:
 		T_NEW class_name_reference ctor_arguments
 			{ $$ = zend_ast_create(ZEND_AST_NEW, $2, $3); }
+	|	T_NEW '(' class_name_reference '<' name_list '>' ')' ctor_arguments
+			{ $$ = zend_ast_create(ZEND_AST_NEW, $3, $8, $5); }
 	|	T_NEW anonymous_class
 			{ $$ = $2; }
 ;

@@ -229,7 +229,7 @@ typedef struct _zend_oparray_context {
 /* op_array or class is preloaded                         |     |     |     */
 #define ZEND_ACC_PRELOADED               (1 << 10) /*  X  |  X  |     |     */
 /*                                                        |     |     |     */
-/* Class Flags (unused: 23...)                            |     |     |     */
+/* Class Flags (unused: 24...)                            |     |     |     */
 /* ===========                                            |     |     |     */
 /*                                                        |     |     |     */
 /* Special class types                                    |     |     |     */
@@ -280,6 +280,9 @@ typedef struct _zend_oparray_context {
 /*                                                        |     |     |     */
 /* Class is linked apart from variance obligations.       |     |     |     */
 #define ZEND_ACC_NEARLY_LINKED           (1 << 22) /*  X  |     |     |     */
+/*                                                        |     |     |     */
+/* Class is a generic template.                           |     |     |     */
+#define ZEND_ACC_GENERIC                 (1 << 23) /*  X  |     |     |     */
 /*                                                        |     |     |     */
 /* Function Flags (unused: 17, 23, 26)                    |     |     |     */
 /* ==============                                         |     |     |     */

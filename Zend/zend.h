@@ -82,6 +82,11 @@ typedef struct _zend_class_name {
 	zend_string *lc_name;
 } zend_class_name;
 
+typedef struct _zend_generic_name {
+	zend_string *name;
+	zend_string *type;
+} zend_generic_name;
+
 typedef struct _zend_trait_method_reference {
 	zend_string *method_name;
 	zend_string *class_name;
@@ -158,8 +163,11 @@ struct _zend_class_entry {
 	int (*serialize)(zval *object, unsigned char **buffer, size_t *buf_len, zend_serialize_data *data);
 	int (*unserialize)(zval *object, zend_class_entry *ce, const unsigned char *buf, size_t buf_len, zend_unserialize_data *data);
 
+	uint32_t num_generics;
 	uint32_t num_interfaces;
 	uint32_t num_traits;
+
+	zend_generic_name *generic_names;
 
 	/* class_entry or string(s) depending on ZEND_ACC_LINKED */
 	union {
